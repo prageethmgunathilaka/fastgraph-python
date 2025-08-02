@@ -10,7 +10,8 @@ fastgraph/
 │   ├── __init__.py        # Package exports
 │   ├── regular_agent.py   # Single command agent
 │   ├── workflow_agent.py  # Multi-command workflow agent
-│   └── orchestrate_agent.py # Hierarchical orchestration agent
+│   ├── orchestrate_agent.py # Hierarchical orchestration agent
+│   └── auto_orchestrate_agent.py # Auto role detection and swarm creation
 ├── config.py              # Configuration management
 ├── main.py                # FastAPI application
 ├── requirements.txt       # Dependencies
@@ -18,7 +19,8 @@ fastgraph/
 │   ├── test_ask_endpoint.py
 │   ├── test_workflow_endpoint.py
 │   ├── test_workflow_integration.py
-│   └── test_orchestrate_endpoint.py
+│   ├── test_orchestrate_endpoint.py
+│   └── test_auto_orchestrate_endpoint.py
 └── README.md
 ```
 
@@ -82,6 +84,17 @@ uvicorn main:app --reload
 - **Request**: `{"tasks": [["task1", "task2"], ["nested_task", ["subtask1", "subtask2"]], ["final_task"]]}`
 - **Response**: `{"received_tasks": [...], "orchestrate_responses": [...], "finalizedResult": "summary"}`
 
+### `/autoOrchestrate` - Auto Role Detection and Swarm Creation
+- **Method**: POST
+- **Request**: `{"command": "your command"}`
+- **Response**: `{"received_command": "...", "auto_orchestrate_response": {...}, "finalizedResult": "..."}`
+
+**Auto Orchestrate Features**:
+- Automatically identifies the appropriate professional role for the command
+- Generates M Language specifications for agent swarms
+- Executes the swarm using the MParser runtime
+- Returns processed results with role context
+
 **Orchestrate Structure**:
 - Each string in the tasks array goes to a regular agent
 - Each array of strings becomes a workflow
@@ -129,6 +142,15 @@ curl -X POST "http://localhost:8000/orchestrate" \
   }'
 ```
 
+### Auto Orchestrate Command
+```bash
+curl -X POST "http://localhost:8000/autoOrchestrate" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "command": "Analyze the current market trends for renewable energy"
+  }'
+```
+
 ### Complex Nested Orchestration
 ```bash
 curl -X POST "http://localhost:8000/orchestrate" \
@@ -153,6 +175,7 @@ pytest test/ -v
 # Run specific test
 python test/test_workflow_integration.py
 python test/test_orchestrate_endpoint.py
+python test/test_auto_orchestrate_endpoint.py
 
 # Run with verbose output
 pytest test/ -v
@@ -163,7 +186,7 @@ pytest test/ -v
 The agents are organized as a reusable library:
 
 ```python
-from agents import run_agent, run_workflow_agent, run_orchestrate_agent
+from agents import run_agent, run_workflow_agent, run_orchestrate_agent, run_auto_orchestrate_agent
 
 # Single command processing
 response = run_agent("What is 2 + 2?")
@@ -181,6 +204,11 @@ orchestrate_responses, summary = run_orchestrate_agent([
     ["Nested task", ["Subtask 1", "Subtask 2"]],  # Nested workflow
     ["Final task"]  # Single agent
 ])
+
+# Auto orchestrate with role detection
+auto_response, summary = run_auto_orchestrate_agent(
+    "Create a Python script to scrape data from a website"
+)
 ```
 
 ## Architecture
@@ -188,5 +216,6 @@ orchestrate_responses, summary = run_orchestrate_agent([
 - **Regular Agent**: Processes single commands through LLM
 - **Workflow Agent**: Orchestrates multiple regular agents and creates summaries
 - **Orchestrate Agent**: Handles hierarchical workflows with nested structures
+- **Auto Orchestrate Agent**: Automatically detects roles and creates agent swarms using M Language
 - **Configuration**: Centralized environment-based configuration
 - **Testing**: Comprehensive integration test suite 

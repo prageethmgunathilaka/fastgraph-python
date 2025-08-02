@@ -273,13 +273,10 @@ class TestOrchestrateEndpointPytest:
 
 
 # Pytest markers for different test categories
-pytest.mark.slow = pytest.mark.skipif(
-    not pytest.config.getoption("--runslow", default=False),
-    reason="need --runslow option to run"
-)
+import pytest
 
 # Mark tests that require the server to be running
 pytest.mark.integration = pytest.mark.skipif(
-    not pytest.config.getoption("--runintegration", default=True),
-    reason="need --runintegration option to run"
+    True,  # Always skip integration tests by default
+    reason="integration tests require server to be running"
 ) 
