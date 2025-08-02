@@ -9,14 +9,16 @@ fastgraph/
 ├── agents/                 # Agent implementations
 │   ├── __init__.py        # Package exports
 │   ├── regular_agent.py   # Single command agent
-│   └── workflow_agent.py  # Multi-command workflow agent
+│   ├── workflow_agent.py  # Multi-command workflow agent
+│   └── orchestrate_agent.py # Hierarchical orchestration agent
 ├── config.py              # Configuration management
 ├── main.py                # FastAPI application
 ├── requirements.txt       # Dependencies
 ├── test/                  # Test suite
 │   ├── test_ask_endpoint.py
 │   ├── test_workflow_endpoint.py
-│   └── test_workflow_integration.py
+│   ├── test_workflow_integration.py
+│   └── test_orchestrate_endpoint.py
 └── README.md
 ```
 
@@ -75,6 +77,17 @@ uvicorn main:app --reload
 - **Request**: `{"commands": ["cmd1", "cmd2", "cmd3"]}`
 - **Response**: `{"received_commands": [...], "workflow_responses": [...], "finalizedResult": "summary"}`
 
+### `/orchestrate` - Hierarchical Orchestration Agent
+- **Method**: POST
+- **Request**: `{"tasks": [["task1", "task2"], ["nested_task", ["subtask1", "subtask2"]], ["final_task"]]}`
+- **Response**: `{"received_tasks": [...], "orchestrate_responses": [...], "finalizedResult": "summary"}`
+
+**Orchestrate Structure**:
+- Each string in the tasks array goes to a regular agent
+- Each array of strings becomes a workflow
+- Workflows can spawn other workflows (nested structure)
+- Results cascade up to create final summaries
+
 ## Access the API
 
 - API: http://localhost:8000
@@ -103,6 +116,32 @@ curl -X POST "http://localhost:8000/workflowask" \
   }'
 ```
 
+### Orchestrate Tasks
+```bash
+curl -X POST "http://localhost:8000/orchestrate" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tasks": [
+      ["Hello, how are you?", "What is the weather like?"],
+      ["Explain quantum computing"],
+      ["Write a poem", "Translate it to Spanish"]
+    ]
+  }'
+```
+
+### Complex Nested Orchestration
+```bash
+curl -X POST "http://localhost:8000/orchestrate" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tasks": [
+      ["Research AI", ["Find AI papers", "Summarize findings"]],
+      ["Write code", "Test code", ["Unit tests", "Integration tests"]],
+      ["Deploy", ["Build", "Deploy to staging", "Deploy to production"]]
+    ]
+  }'
+```
+
 ## Testing
 
 Run the integration tests:
@@ -113,6 +152,7 @@ pytest test/ -v
 
 # Run specific test
 python test/test_workflow_integration.py
+python test/test_orchestrate_endpoint.py
 
 # Run with verbose output
 pytest test/ -v
@@ -123,7 +163,7 @@ pytest test/ -v
 The agents are organized as a reusable library:
 
 ```python
-from agents import run_agent, run_workflow_agent
+from agents import run_agent, run_workflow_agent, run_orchestrate_agent
 
 # Single command processing
 response = run_agent("What is 2 + 2?")
@@ -134,11 +174,19 @@ responses, summary = run_workflow_agent([
     "Calculate 15 + 27",
     "Translate hello to Spanish"
 ])
+
+# Hierarchical orchestration
+orchestrate_responses, summary = run_orchestrate_agent([
+    ["Task 1", "Task 2"],  # Workflow
+    ["Nested task", ["Subtask 1", "Subtask 2"]],  # Nested workflow
+    ["Final task"]  # Single agent
+])
 ```
 
 ## Architecture
 
 - **Regular Agent**: Processes single commands through LLM
 - **Workflow Agent**: Orchestrates multiple regular agents and creates summaries
+- **Orchestrate Agent**: Handles hierarchical workflows with nested structures
 - **Configuration**: Centralized environment-based configuration
 - **Testing**: Comprehensive integration test suite 

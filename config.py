@@ -26,4 +26,10 @@ class Config:
     def validate(cls):
         """Validate required configuration."""
         if not cls.OPENAI_API_KEY:
-            raise ValueError("OPENAI_API_KEY is required. Please set it in your environment or .env file.") 
+            raise ValueError("OPENAI_API_KEY is required. Please set it in your environment or .env file.")
+        
+        # Validate model name
+        valid_models = ["gpt-3.5-turbo", "gpt-4", "gpt-4-turbo", "gpt-4o", "gpt-4o-mini"]
+        if cls.DEFAULT_LLM_MODEL not in valid_models:
+            print(f"Warning: Model '{cls.DEFAULT_LLM_MODEL}' may not be valid. Using 'gpt-3.5-turbo' instead.")
+            cls.DEFAULT_LLM_MODEL = "gpt-3.5-turbo" 

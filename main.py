@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-from typing import List
-from agents import run_agent, run_workflow_agent
+from typing import List, Union, Any
+from agents import run_agent, run_workflow_agent, run_orchestrate_agent
 from config import Config
 
 app = FastAPI(title="FastGraph API", description="A simple FastAPI application with LangGraph agent")
@@ -11,6 +11,12 @@ class AskRequest(BaseModel):
 
 class WorkflowAskRequest(BaseModel):
     commands: List[str]
+
+# Define a recursive type for nested tasks
+TaskItem = Union[str, List['TaskItem']]
+
+class OrchestrateRequest(BaseModel):
+    tasks: List[List[TaskItem]]
 
 @app.post("/ask")
 async def ask(request: AskRequest):
@@ -32,6 +38,18 @@ async def workflow_ask(request: WorkflowAskRequest):
     return {
         "received_commands": request.commands,
         "workflow_responses": workflow_responses,
+        "finalizedResult": finalized_result
+    }
+
+@app.post("/orchestrate")
+async def orchestrate(request: OrchestrateRequest):
+    """Endpoint that accepts hierarchical tasks and returns orchestrated responses."""
+    # Run the orchestrate agent with the hierarchical tasks
+    orchestrate_responses, finalized_result = run_orchestrate_agent(request.tasks)
+    
+    return {
+        "received_tasks": request.tasks,
+        "orchestrate_responses": orchestrate_responses,
         "finalizedResult": finalized_result
     }
 

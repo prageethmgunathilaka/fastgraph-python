@@ -1,0 +1,10 @@
+# OpenAI API Configuration
+OPENAI_API_KEY=your-openai-api-key-here
+
+# LLM Configuration
+DEFAULT_LLM_MODEL=gpt-3.5-turbo
+LLM_TEMPERATURE=0.7
+
+# Server Configuration
+HOST=0.0.0.0
+PORT=8000 
