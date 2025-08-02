@@ -1,11 +1,15 @@
 from fastapi import FastAPI
+from pydantic import BaseModel
 
 app = FastAPI(title="FastGraph API", description="A simple FastAPI application")
 
-@app.get("/ask")
-async def ask():
-    """Endpoint that always returns hello world."""
-    return {"message": "hello world"}
+class AskRequest(BaseModel):
+    text: str
+
+@app.post("/ask")
+async def ask(request: AskRequest):
+    """Endpoint that accepts text and returns hello world."""
+    return {"message": "hello world", "received_text": request.text}
 
 @app.get("/")
 async def root():
