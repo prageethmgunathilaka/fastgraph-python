@@ -3,4 +3,6 @@ uvicorn[standard]==0.24.0
 langgraph==0.2.16
 langchain==0.2.9
 langchain-openai==0.1.25
-python-dotenv==1.0.0 
+python-dotenv==1.0.0
+pytest==8.0.0
+httpx==0.25.2 

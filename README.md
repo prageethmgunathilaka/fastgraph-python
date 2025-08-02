@@ -45,6 +45,21 @@ Or using uvicorn directly:
 uvicorn main:app --reload
 ```
 
+## Testing
+
+Run the integration tests:
+
+```bash
+# Run all tests
+pytest test/
+
+# Run specific test
+python test/test_ask_endpoint.py
+
+# Run with verbose output
+pytest test/ -v
+```
+
 ## API Endpoints
 
 - `GET /` - Welcome message
