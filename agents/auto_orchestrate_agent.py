@@ -153,6 +153,16 @@ swarm task_swarm {{
         else:
             m_language_spec = str(llm_response).strip()
         
+        # Strip markdown code block syntax if present
+        if m_language_spec.startswith('```'):
+            # Remove opening ```m or ``` and closing ```
+            lines = m_language_spec.split('\n')
+            if lines[0].startswith('```'):
+                lines = lines[1:]  # Remove first line
+            if lines and lines[-1].strip() == '```':
+                lines = lines[:-1]  # Remove last line
+            m_language_spec = '\n'.join(lines).strip()
+        
         logger.debug(f"Generated M Language spec: {m_language_spec}")
         
         # Add to state
@@ -167,11 +177,11 @@ swarm task_swarm {{
         # Fallback specification
         fallback_spec = f"""
 swarm fallback_swarm {{
-    agent {identified_role.lower().replace(' ', '_')}_agent {{
+    agent main_agent {{
         role: "{identified_role}"
-        capabilities: "llm"
+        capabilities: "llm,analysis"
         inputs: "user_command"
-        outputs: "result"
+        outputs: "analysis_result"
         config: {{
             model: "gpt-4"
             temperature: 0.7
@@ -179,11 +189,11 @@ swarm fallback_swarm {{
     }}
     
     workflow sequential {{
-        {identified_role.lower().replace(' ', '_')}_agent(input: "user_command", output: "result")
+        main_agent(input: "user_command", output: "analysis_result")
     }}
 }}
 """
-        state["m_language_spec"] = fallback_spec
+        state["m_language_spec"] = fallback_spec.strip()
         state["messages"].append(AIMessage(content=error_msg))
     
     return state
