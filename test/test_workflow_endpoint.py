@@ -38,6 +38,7 @@ def test_workflow_ask_endpoint():
     # Assert response structure
     assert "received_commands" in response_data
     assert "workflow_responses" in response_data
+    assert "finalizedResult" in response_data
     
     # Assert received_commands matches input
     assert response_data["received_commands"] == test_payload["commands"]
@@ -48,6 +49,10 @@ def test_workflow_ask_endpoint():
     # Assert we got the same number of responses as commands
     assert len(response_data["workflow_responses"]) == len(test_payload["commands"])
     
+    # Assert finalizedResult is a string and not empty
+    assert isinstance(response_data["finalizedResult"], str)
+    assert len(response_data["finalizedResult"]) > 0
+    
     # Assert each response is not empty
     for i, response in enumerate(response_data["workflow_responses"]):
         assert response is not None
@@ -55,6 +60,7 @@ def test_workflow_ask_endpoint():
         print(f"Command {i+1}: {test_payload['commands'][i]}")
         print(f"Response {i+1}: {response}")
     
+    print(f"Finalized Result: {response_data['finalizedResult']}")
     print(f"Test passed! Processed {len(response_data['workflow_responses'])} commands successfully")
 
 
@@ -79,12 +85,16 @@ def test_workflow_ask_empty_commands():
     # Assert response structure
     assert "received_commands" in response_data
     assert "workflow_responses" in response_data
+    assert "finalizedResult" in response_data
     
     # Assert received_commands matches input
     assert response_data["received_commands"] == test_payload["commands"]
     
     # Assert workflow_responses is empty list
     assert response_data["workflow_responses"] == []
+    
+    # Assert finalizedResult contains appropriate message
+    assert "No commands to process" in response_data["finalizedResult"]
 
 
 def test_workflow_ask_single_command():
@@ -108,6 +118,7 @@ def test_workflow_ask_single_command():
     # Assert response structure
     assert "received_commands" in response_data
     assert "workflow_responses" in response_data
+    assert "finalizedResult" in response_data
     
     # Assert we got exactly one response
     assert len(response_data["workflow_responses"]) == 1
@@ -115,6 +126,10 @@ def test_workflow_ask_single_command():
     # Assert the response is not empty
     assert response_data["workflow_responses"][0] is not None
     assert len(response_data["workflow_responses"][0]) > 0
+    
+    # Assert finalizedResult is a string and not empty
+    assert isinstance(response_data["finalizedResult"], str)
+    assert len(response_data["finalizedResult"]) > 0
 
 
 if __name__ == "__main__":

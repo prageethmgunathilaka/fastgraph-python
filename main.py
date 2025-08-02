@@ -1,8 +1,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import List
-from agent import run_agent
-from workflow_agent import run_workflow_agent
+from agents import run_agent, run_workflow_agent
 from config import Config
 
 app = FastAPI(title="FastGraph API", description="A simple FastAPI application with LangGraph agent")
@@ -26,13 +25,14 @@ async def ask(request: AskRequest):
 
 @app.post("/workflowask")
 async def workflow_ask(request: WorkflowAskRequest):
-    """Endpoint that accepts a list of commands and returns workflow agent responses."""
+    """Endpoint that accepts a list of commands and returns workflow agent responses with summary."""
     # Run the workflow agent with the list of commands
-    workflow_responses = run_workflow_agent(request.commands)
+    workflow_responses, finalized_result = run_workflow_agent(request.commands)
     
     return {
         "received_commands": request.commands,
-        "workflow_responses": workflow_responses
+        "workflow_responses": workflow_responses,
+        "finalizedResult": finalized_result
     }
 
 @app.get("/")

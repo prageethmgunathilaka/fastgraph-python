@@ -5,9 +5,10 @@ Workflow agent that spawns individual regular agents for each command.
 import logging
 from typing import TypedDict, List
 from langchain_core.messages import HumanMessage, AIMessage, BaseMessage
+from langchain_openai import ChatOpenAI
 from langgraph.graph import StateGraph, END
 from config import Config
-from agent import run_agent
+from .regular_agent import run_agent
 
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
@@ -20,6 +21,71 @@ class WorkflowState(TypedDict):
     responses: list[str]
     current_index: int
     commands: list[str]
+
+
+def create_summary_llm():
+    """
+    Create an LLM instance for creating summaries.
+    """
+    # Validate configuration
+    Config.validate()
+    
+    logger.debug(f"Creating summary LLM with model: {Config.DEFAULT_LLM_MODEL}, temperature: {Config.LLM_TEMPERATURE}")
+    
+    # Create LLM instance using config
+    llm = ChatOpenAI(
+        model=Config.DEFAULT_LLM_MODEL, 
+        temperature=Config.LLM_TEMPERATURE,
+        api_key=Config.OPENAI_API_KEY
+    )
+    
+    return llm
+
+
+def create_summary(responses: List[str]) -> str:
+    """
+    Create a summary of all responses using LLM.
+    """
+    if not responses:
+        return "No responses to summarize."
+    
+    # Create a prompt for summarization
+    responses_text = "\n".join([f"Response {i+1}: {response}" for i, response in enumerate(responses)])
+    
+    summary_prompt = f"""Please provide a concise summary of the following responses:
+
+{responses_text}
+
+Summary:"""
+    
+    try:
+        logger.debug("Creating summary using LLM...")
+        llm = create_summary_llm()
+        
+        logger.debug(f"Invoking LLM for summary with {len(responses)} responses")
+        llm_response = llm.invoke(summary_prompt)
+        
+        logger.debug(f"Raw LLM summary response type: {type(llm_response)}")
+        logger.debug(f"Raw LLM summary response: {llm_response}")
+        
+        # Convert the response to string
+        if hasattr(llm_response, 'content'):
+            summary = llm_response.content
+            logger.debug(f"Extracted summary content: {summary}")
+        elif isinstance(llm_response, str):
+            summary = llm_response
+            logger.debug(f"Summary is already string: {summary}")
+        else:
+            summary = str(llm_response)
+            logger.debug(f"Converted summary to string: {summary}")
+            
+    except Exception as e:
+        # Fallback summary if LLM fails
+        error_msg = f"Error creating summary: {str(e)}"
+        logger.error(f"LLM summary creation failed: {str(e)}")
+        summary = error_msg
+    
+    return summary
 
 
 def workflow_node(state: WorkflowState) -> WorkflowState:
@@ -94,15 +160,15 @@ def create_workflow_agent():
     return app
 
 
-def run_workflow_agent(commands: List[str]) -> List[str]:
+def run_workflow_agent(commands: List[str]) -> tuple[List[str], str]:
     """
-    Run the workflow agent with a list of commands and return responses.
+    Run the workflow agent with a list of commands and return responses and summary.
     """
     logger.debug(f"Starting workflow agent with {len(commands)} commands")
     
     if not commands:
         logger.warning("No commands provided")
-        return []
+        return [], "No commands to process."
     
     agent = create_workflow_agent()
     
@@ -120,7 +186,13 @@ def run_workflow_agent(commands: List[str]) -> List[str]:
     
     logger.debug(f"Workflow agent result: {result}")
     
-    # Return the list of responses
+    # Get the list of responses
     responses = result["responses"]
     logger.debug(f"Final workflow responses: {responses}")
-    return responses 
+    
+    # Create summary of all responses
+    logger.debug("Creating summary of all responses...")
+    finalized_result = create_summary(responses)
+    logger.debug(f"Finalized result: {finalized_result}")
+    
+    return responses, finalized_result 

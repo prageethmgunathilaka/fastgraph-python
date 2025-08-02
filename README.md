@@ -2,6 +2,24 @@
 
 A simple FastAPI application with LangGraph agent and LLM capabilities.
 
+## Project Structure
+
+```
+fastgraph/
+├── agents/                 # Agent implementations
+│   ├── __init__.py        # Package exports
+│   ├── regular_agent.py   # Single command agent
+│   └── workflow_agent.py  # Multi-command workflow agent
+├── config.py              # Configuration management
+├── main.py                # FastAPI application
+├── requirements.txt       # Dependencies
+├── test/                  # Test suite
+│   ├── test_ask_endpoint.py
+│   ├── test_workflow_endpoint.py
+│   └── test_workflow_integration.py
+└── README.md
+```
+
 ## Installation
 
 ```bash
@@ -45,25 +63,17 @@ Or using uvicorn directly:
 uvicorn main:app --reload
 ```
 
-## Testing
-
-Run the integration tests:
-
-```bash
-# Run all tests
-pytest test/
-
-# Run specific test
-python test/test_ask_endpoint.py
-
-# Run with verbose output
-pytest test/ -v
-```
-
 ## API Endpoints
 
-- `GET /` - Welcome message
-- `POST /ask` - Send text to LangGraph agent with LLM
+### `/ask` - Single Command Agent
+- **Method**: POST
+- **Request**: `{"text": "your command"}`
+- **Response**: `{"received_text": "...", "agent_response": "..."}`
+
+### `/workflowask` - Workflow Agent
+- **Method**: POST
+- **Request**: `{"commands": ["cmd1", "cmd2", "cmd3"]}`
+- **Response**: `{"received_commands": [...], "workflow_responses": [...], "finalizedResult": "summary"}`
 
 ## Access the API
 
@@ -71,19 +81,64 @@ pytest test/ -v
 - Interactive docs: http://localhost:8000/docs
 - Alternative docs: http://localhost:8000/redoc
 
-## Example Request
+## Example Requests
 
+### Single Command
 ```bash
 curl -X POST "http://localhost:8000/ask" \
   -H "Content-Type: application/json" \
   -d '{"text": "What is the capital of France?"}'
 ```
 
-## Response Format
+### Workflow Commands
+```bash
+curl -X POST "http://localhost:8000/workflowask" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "commands": [
+      "What is the capital of France?",
+      "Calculate 2 + 2",
+      "Translate hello to Spanish"
+    ]
+  }'
+```
 
-```json
-{
-  "received_text": "What is the capital of France?",
-  "agent_response": "The capital of France is Paris..."
-}
-``` 
+## Testing
+
+Run the integration tests:
+
+```bash
+# Run all tests
+pytest test/ -v
+
+# Run specific test
+python test/test_workflow_integration.py
+
+# Run with verbose output
+pytest test/ -v
+```
+
+## Library Structure
+
+The agents are organized as a reusable library:
+
+```python
+from agents import run_agent, run_workflow_agent
+
+# Single command processing
+response = run_agent("What is 2 + 2?")
+
+# Multiple command processing
+responses, summary = run_workflow_agent([
+    "What is the capital of France?",
+    "Calculate 15 + 27",
+    "Translate hello to Spanish"
+])
+```
+
+## Architecture
+
+- **Regular Agent**: Processes single commands through LLM
+- **Workflow Agent**: Orchestrates multiple regular agents and creates summaries
+- **Configuration**: Centralized environment-based configuration
+- **Testing**: Comprehensive integration test suite 

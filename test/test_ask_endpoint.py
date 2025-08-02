@@ -1,5 +1,5 @@
 """
-Integration test for the /ask endpoint.
+Tests for the /ask endpoint.
 """
 
 import sys

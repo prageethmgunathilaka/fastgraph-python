@@ -1,5 +1,5 @@
 """
-LangGraph agent with LLM capabilities.
+Regular agent implementation for FastGraph.
 """
 
 import logging
