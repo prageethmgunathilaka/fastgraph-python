@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from agent import run_agent
+from config import Config
 
 app = FastAPI(title="FastGraph API", description="A simple FastAPI application with LangGraph agent")
 
@@ -25,4 +26,4 @@ async def root():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000) 
+    uvicorn.run(app, host=Config.HOST, port=Config.PORT) 
