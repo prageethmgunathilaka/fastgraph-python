@@ -43,7 +43,7 @@ cp env_template.txt .env
 OPENAI_API_KEY=your-openai-api-key-here
 
 # LLM Configuration
-DEFAULT_LLM_MODEL=gpt-3.5-turbo
+DEFAULT_LLM_MODEL=gpt-4o
 LLM_TEMPERATURE=0.7
 
 # Server Configuration
@@ -98,6 +98,18 @@ uvicorn main:app --reload
 **Orchestrate Structure**:
 - Each string in the tasks array goes to a regular agent
 - Each array of strings becomes a workflow
+
+## Recent Updates
+
+### ✅ Latest Fixes (Latest)
+- **Model Configuration**: Updated default model from `gpt-3.5-turbo` to `gpt-4o` for better accessibility
+- **M Language Parsing**: Fixed auto-orchestrate endpoint to properly handle markdown code blocks in LLM responses
+- **Test Suite**: All tests now pass successfully with the updated configuration
+
+### 🔧 Technical Improvements
+- Enhanced error handling and fallback mechanisms
+- Improved markdown code block stripping for M Language parsing
+- Better model validation and configuration management
 - Workflows can spawn other workflows (nested structure)
 - Results cascade up to create final summaries
 

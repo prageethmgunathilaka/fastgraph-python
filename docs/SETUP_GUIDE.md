@@ -24,7 +24,7 @@ pip install -r requirements.txt
 ```bash
 # Set environment variables
 export OPENAI_API_KEY="your-openai-api-key-here"
-export DEFAULT_LLM_MODEL="gpt-3.5-turbo"
+export DEFAULT_LLM_MODEL="gpt-4o"
 export LLM_TEMPERATURE="0.7"
 export HOST="0.0.0.0"
 export PORT="8000"
@@ -37,6 +37,7 @@ cp env_template.txt .env
 
 # Edit the .env file with your settings
 # Replace 'your-openai-api-key-here' with your actual OpenAI API key
+# Note: The default model is now gpt-4o for better accessibility
 ```
 
 ### 4. Run the Server
@@ -176,6 +177,43 @@ Expected response:
 ```json
 {"message": "Welcome to FastGraph API with LangGraph Agent"}
 ```
+
+---
+
+## Troubleshooting
+
+### Model Access Issues
+**Problem**: Tests fail with "Project does not have access to model" errors.
+
+**Solution**: 
+- The default model has been updated to `gpt-4o` for better accessibility
+- If you still encounter issues, try using `gpt-4o-mini` or `gpt-3.5-turbo`
+- Update your `.env` file or environment variables accordingly
+
+### Auto-Orchestrate Parsing Errors
+**Problem**: Auto-orchestrate endpoint returns "Unexpected character" errors.
+
+**Solution**: 
+- This issue has been fixed by adding markdown code block stripping
+- The parser now correctly handles LLM responses that include markdown formatting
+- If you encounter this issue, ensure you're using the latest version
+
+### API Key Configuration
+**Problem**: "OPENAI_API_KEY is required" error.
+
+**Solution**:
+- Set your OpenAI API key in environment variables or `.env` file
+- Ensure the API key has access to the specified model
+- Test with a simple request to `/ask` endpoint first
+
+### Test Failures
+**Problem**: Tests timeout or fail unexpectedly.
+
+**Solution**:
+- Ensure the server is running on the correct port (default: 8000)
+- Check that all dependencies are installed: `pip install -r requirements.txt`
+- Verify API key configuration and model access
+- Run tests individually to isolate issues
 
 ---
 

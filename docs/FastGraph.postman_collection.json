@@ -1,0 +1,343 @@
+{
+  "info": {
+    "name": "NiyoGen FastGraph API",
+    "_postman_id": "7a021e84-5b8b-4f7e-9a4c-8f3f6b8c5f10",
+    "description": "Postman collection for running the FastGraph API endpoints locally, with comprehensive tests for positive and negative cases.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Root - Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            ""
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+              "pm.test('Response time < 1000ms', () => pm.expect(pm.response.responseTime).to.be.below(1000));",
+              "pm.test('Content-Type is JSON', () => pm.expect(pm.response.headers.get('Content-Type')||'').to.include('application/json'));",
+              "const json = pm.response.json();",
+              "pm.test('Has message:string', () => { pm.expect(json).to.have.property('message'); pm.expect(json.message).to.be.a('string').and.not.empty; });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Docs - Swagger UI",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/docs",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "docs"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Docs - Redoc",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/redoc",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "redoc"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status is 200', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Ask - Valid",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"text\": \"What is the capital of France?\"\n}"
+        },
+        "url": { "raw": "{{baseUrl}}/ask", "host": ["{{baseUrl}}"], "path": ["ask"] }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Status & headers",
+              "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+              "pm.test('Response time < 3000ms', () => pm.expect(pm.response.responseTime).to.be.below(3000));",
+              "pm.test('Content-Type is JSON', () => pm.expect(pm.response.headers.get('Content-Type')||'').to.include('application/json'));",
+              "// Schema",
+              "const schema = { type: 'object', required: ['received_text','agent_response'], properties: { received_text: {type:'string'}, agent_response: {type:'string'} } };",
+              "const json = pm.response.json();",
+              "pm.test('Schema valid', () => pm.expect(tv4.validate(json, schema)).to.be.true);",
+              "// Echo & content",
+              "const req = pm.request.body && pm.request.body.mode === 'raw' ? JSON.parse(pm.request.body.raw) : {};",
+              "pm.test('Echoed text matches', () => pm.expect(json.received_text).to.eql(req.text));",
+              "pm.test('agent_response non-empty', () => pm.expect(json.agent_response).to.be.a('string').and.not.empty);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Ask - Empty Text",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": { "mode": "raw", "raw": "{\n  \"text\": \"\"\n}" },
+        "url": { "raw": "{{baseUrl}}/ask", "host": ["{{baseUrl}}"], "path": ["ask"] }
+      },
+      "event": [
+        { "listen": "test", "script": { "type": "text/javascript", "exec": [
+          "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+          "const json = pm.response.json();",
+          "pm.test('agent_response exists', () => pm.expect(json.agent_response).to.be.a('string'));"
+        ] } }
+      ]
+    },
+    {
+      "name": "Ask - Missing Field (422)",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": { "mode": "raw", "raw": "{}" },
+        "url": { "raw": "{{baseUrl}}/ask", "host": ["{{baseUrl}}"], "path": ["ask"] }
+      },
+      "event": [
+        { "listen": "test", "script": { "type": "text/javascript", "exec": [
+          "pm.test('Status is 422', () => pm.response.to.have.status(422));",
+          "pm.test('Content-Type JSON', () => pm.expect(pm.response.headers.get('Content-Type')||'').to.include('application/json'));",
+          "const json = pm.response.json();",
+          "pm.test('Has validation detail array', () => pm.expect(json).to.have.property('detail'));"
+        ] } }
+      ]
+    },
+    {
+      "name": "WorkflowAsk - Multiple Commands",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": { "mode": "raw", "raw": "{\n  \"commands\": [\n    \"What is the capital of France?\",\n    \"Calculate 2 + 2\",\n    \"Translate 'Hello' to Spanish\"\n  ]\n}" },
+        "url": { "raw": "{{baseUrl}}/workflowask", "host": ["{{baseUrl}}"], "path": ["workflowask"] }
+      },
+      "event": [
+        { "listen": "test", "script": { "type": "text/javascript", "exec": [
+          "pm.test('Status 200', () => pm.response.to.have.status(200));",
+          "pm.test('Content-Type JSON', () => pm.expect(pm.response.headers.get('Content-Type')||'').to.include('application/json'));",
+          "const json = pm.response.json();",
+          "const schema = { type:'object', required:['received_commands','workflow_responses','finalizedResult'], properties: { received_commands: {type:'array', items:{type:'string'}}, workflow_responses: {type:'array', items:{type:'string'}}, finalizedResult: {type:'string'} } };",
+          "pm.test('Schema valid', () => pm.expect(tv4.validate(json, schema)).to.be.true);",
+          "pm.test('Lengths match', () => pm.expect(json.workflow_responses.length).to.eql(json.received_commands.length));",
+          "pm.test('finalizedResult non-empty', () => pm.expect(json.finalizedResult).to.be.a('string').and.not.empty);"
+        ] } }
+      ]
+    },
+    {
+      "name": "WorkflowAsk - Empty Commands",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": { "mode": "raw", "raw": "{\n  \"commands\": []\n}" },
+        "url": { "raw": "{{baseUrl}}/workflowask", "host": ["{{baseUrl}}"], "path": ["workflowask"] }
+      },
+      "event": [
+        { "listen": "test", "script": { "type": "text/javascript", "exec": [
+          "pm.test('Status 200', () => pm.response.to.have.status(200));",
+          "const json = pm.response.json();",
+          "pm.test('workflow_responses empty', () => pm.expect(json.workflow_responses).to.eql([]));",
+          "pm.test('Finalized contains message', () => pm.expect(json.finalizedResult).to.include('No commands to process'));"
+        ] } }
+      ]
+    },
+    {
+      "name": "WorkflowAsk - Missing Field (422)",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": { "mode": "raw", "raw": "{}" },
+        "url": { "raw": "{{baseUrl}}/workflowask", "host": ["{{baseUrl}}"], "path": ["workflowask"] }
+      },
+      "event": [
+        { "listen": "test", "script": { "type": "text/javascript", "exec": [
+          "pm.test('Status 422', () => pm.response.to.have.status(422));",
+          "const json = pm.response.json(); pm.test('Has detail', () => pm.expect(json).to.have.property('detail'));"
+        ] } }
+      ]
+    },
+    {
+      "name": "Orchestrate - Simple",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": { "mode": "raw", "raw": "{\n  \"tasks\": [\n    [\n      \"Hello, how are you?\",\n      \"What is the weather like?\"\n    ],\n    [\n      \"Explain quantum computing\"\n    ],\n    [\n      \"Write a poem\",\n      \"Translate it to Spanish\"\n    ]\n  ]\n}" },
+        "url": { "raw": "{{baseUrl}}/orchestrate", "host": ["{{baseUrl}}"], "path": ["orchestrate"] }
+      },
+      "event": [
+        { "listen": "test", "script": { "type": "text/javascript", "exec": [
+          "pm.test('Status 200', () => pm.response.to.have.status(200));",
+          "const json = pm.response.json();",
+          "const schema = { type:'object', required:['received_tasks','orchestrate_responses','finalizedResult'], properties: { received_tasks:{type:'array'}, orchestrate_responses:{type:'array'}, finalizedResult:{type:'string'} } };",
+          "pm.test('Schema valid', () => pm.expect(tv4.validate(json, schema)).to.be.true);",
+          "pm.test('orchestrate_responses length = 3', () => pm.expect(json.orchestrate_responses.length).to.eql(3));"
+        ] } }
+      ]
+    },
+    {
+      "name": "Orchestrate - Nested",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": { "mode": "raw", "raw": "{\n  \"tasks\": [\n    [\n      \"Research AI\",\n      [\n        \"Find AI papers\",\n        \"Summarize findings\"\n      ]\n    ],\n    [\n      \"Write code\",\n      \"Test code\",\n      [\n        \"Unit tests\",\n        \"Integration tests\"\n      ]\n    ],\n    [\n      \"Deploy\",\n      [\n        \"Build\",\n        \"Deploy to staging\",\n        \"Deploy to production\"\n      ]\n    ]\n  ]\n}" },
+        "url": { "raw": "{{baseUrl}}/orchestrate", "host": ["{{baseUrl}}"], "path": ["orchestrate"] }
+      },
+      "event": [
+        { "listen": "test", "script": { "type": "text/javascript", "exec": [
+          "pm.test('Status 200', () => pm.response.to.have.status(200));",
+          "const json = pm.response.json();",
+          "pm.test('Has required fields', () => { pm.expect(json).to.have.property('received_tasks'); pm.expect(json).to.have.property('orchestrate_responses'); pm.expect(json).to.have.property('finalizedResult'); });",
+          "pm.test('orchestrate_responses is array', () => pm.expect(json.orchestrate_responses).to.be.an('array'));"
+        ] } }
+      ]
+    },
+    {
+      "name": "Orchestrate - Missing Field (422)",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": { "mode": "raw", "raw": "{}" },
+        "url": { "raw": "{{baseUrl}}/orchestrate", "host": ["{{baseUrl}}"], "path": ["orchestrate"] }
+      },
+      "event": [
+        { "listen": "test", "script": { "type": "text/javascript", "exec": [
+          "pm.test('Status 422', () => pm.response.to.have.status(422));",
+          "const json = pm.response.json(); pm.test('Has detail', () => pm.expect(json).to.have.property('detail'));"
+        ] } }
+      ]
+    },
+    {
+      "name": "Orchestrate - Empty Tasks (200 or 422)",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": { "mode": "raw", "raw": "{\n  \"tasks\": []\n}" },
+        "url": { "raw": "{{baseUrl}}/orchestrate", "host": ["{{baseUrl}}"], "path": ["orchestrate"] }
+      },
+      "event": [
+        { "listen": "test", "script": { "type": "text/javascript", "exec": [
+          "pm.test('Status 200 or 422', () => pm.expect([200,422]).to.include(pm.response.code));"
+        ] } }
+      ]
+    },
+    {
+      "name": "AutoOrchestrate - Valid",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": { "mode": "raw", "raw": "{\n  \"command\": \"Analyze the current market trends for renewable energy\"\n}" },
+        "url": { "raw": "{{baseUrl}}/autoOrchestrate", "host": ["{{baseUrl}}"], "path": ["autoOrchestrate"] }
+      },
+      "event": [
+        { "listen": "test", "script": { "type": "text/javascript", "exec": [
+          "pm.test('Status 200', () => pm.response.to.have.status(200));",
+          "const json = pm.response.json();",
+          "const schema = { type:'object', required:['received_command','auto_orchestrate_response','finalizedResult'], properties: { received_command:{type:'string'}, auto_orchestrate_response:{ type:'object', required:['identified_role','m_language_spec','swarm_result','processing_steps'] }, finalizedResult:{type:'string'} } };",
+          "pm.test('Schema valid', () => pm.expect(tv4.validate(json, schema)).to.be.true);",
+          "pm.test('processing_steps match expected', () => { const steps = json.auto_orchestrate_response.processing_steps || []; pm.expect(steps).to.eql(['Role identification','M Language specification generation','Swarm execution','Result compilation']); });"
+        ] } }
+      ]
+    },
+    {
+      "name": "AutoOrchestrate - Empty Command",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": { "mode": "raw", "raw": "{\n  \"command\": \"\"\n}" },
+        "url": { "raw": "{{baseUrl}}/autoOrchestrate", "host": ["{{baseUrl}}"], "path": ["autoOrchestrate"] }
+      },
+      "event": [
+        { "listen": "test", "script": { "type": "text/javascript", "exec": [
+          "pm.test('Status 200', () => pm.response.to.have.status(200));",
+          "const json = pm.response.json();",
+          "pm.test('Graceful message', () => pm.expect(json.finalizedResult).to.eql('No command to process.'));"
+        ] } }
+      ]
+    },
+    {
+      "name": "AutoOrchestrate - Missing Field (422)",
+      "request": {
+        "method": "POST",
+        "header": [ { "key": "Content-Type", "value": "application/json" } ],
+        "body": { "mode": "raw", "raw": "{}" },
+        "url": { "raw": "{{baseUrl}}/autoOrchestrate", "host": ["{{baseUrl}}"], "path": ["autoOrchestrate"] }
+      },
+      "event": [
+        { "listen": "test", "script": { "type": "text/javascript", "exec": [
+          "pm.test('Status 422', () => pm.response.to.have.status(422));",
+          "const json = pm.response.json(); pm.test('Has detail', () => pm.expect(json).to.have.property('detail'));"
+        ] } }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.variables.set('ts', Date.now());"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8000", "type": "string" }
+  ]
+} 

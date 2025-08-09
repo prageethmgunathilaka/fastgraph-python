@@ -142,7 +142,55 @@ curl -X POST "http://localhost:8000/orchestrate" \
 
 ---
 
-### 4. `/` - Root Endpoint
+### 4. `/autoOrchestrate` - Auto Orchestration Agent
+**Method**: `POST`  
+**Purpose**: Automatically determine roles and create agent swarms for user commands
+
+**Request**:
+```json
+{
+  "command": "your command here"
+}
+```
+
+**Response**:
+```json
+{
+  "received_command": "your command here",
+  "auto_orchestrate_response": {
+    "identified_role": "Research Analyst",
+    "m_language_spec": "swarm task_swarm { ... }",
+    "swarm_result": {
+      "success": true,
+      "execution_results": "processed results"
+    },
+    "processing_steps": [
+      "Role identification",
+      "M Language specification generation",
+      "Swarm execution",
+      "Result compilation"
+    ]
+  },
+  "finalizedResult": "Final processed result"
+}
+```
+
+**Example**:
+```bash
+curl -X POST "http://localhost:8000/autoOrchestrate" \
+  -H "Content-Type: application/json" \
+  -d '{"command": "check what are the best tourist destinations in sri lanka"}'
+```
+
+**Features**:
+- **Role Identification**: Automatically identifies the most appropriate professional role for the task
+- **M Language Generation**: Creates specialized M Language specifications for agent swarms
+- **Swarm Execution**: Executes the generated specifications using the MParser runtime
+- **Error Handling**: Graceful fallbacks when parsing or execution fails
+
+---
+
+### 5. `/` - Root Endpoint
 **Method**: `GET`  
 **Purpose**: Health check and API information
 

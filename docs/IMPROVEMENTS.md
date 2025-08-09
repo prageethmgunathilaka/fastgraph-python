@@ -3,6 +3,47 @@
 ## Overview
 This document outlines all the improvements and enhancements made to the FastGraph project, providing a comprehensive reference for future development and understanding.
 
+## Recent Fixes (Latest Updates)
+
+### 1. Model Configuration Fix
+**Issue**: Tests were failing due to model access restrictions - the project didn't have access to `gpt-3.5-turbo` model.
+
+**Solution**: 
+- Updated default model from `gpt-3.5-turbo` to `gpt-4o` in `config.py`
+- Updated `env_template.txt` to reflect the new default model
+- The `gpt-4o` model is more widely accessible and provides better performance
+
+**Files Modified**:
+- `config.py`: Changed `DEFAULT_LLM_MODEL` default from `"gpt-3.5-turbo"` to `"gpt-4o"`
+- `env_template.txt`: Updated template to use `gpt-4o` as default
+
+**Impact**: All tests now pass successfully, including the previously failing `test_ask_endpoint_llm_response`.
+
+### 2. M Language Parsing Fix
+**Issue**: Auto-orchestrate endpoint was generating M Language specifications wrapped in markdown code blocks, causing parsing errors.
+
+**Solution**: 
+- Added markdown code block stripping in `generate_m_language_spec_node()` function
+- The parser now correctly extracts M Language code from LLM responses that include markdown formatting
+- Improved fallback specification generation
+
+**Files Modified**:
+- `agents/auto_orchestrate_agent.py`: Added code block stripping logic and improved fallback specs
+
+**Code Changes**:
+```python
+# Strip markdown code block syntax if present
+if m_language_spec.startswith('```'):
+    lines = m_language_spec.split('\n')
+    if lines[0].startswith('```'):
+        lines = lines[1:]  # Remove first line
+    if lines and lines[-1].strip() == '```':
+        lines = lines[:-1]  # Remove last line
+    m_language_spec = '\n'.join(lines).strip()
+```
+
+**Impact**: Auto-orchestrate endpoint now properly parses M Language specifications and executes swarms successfully.
+
 ## Project Structure Improvements
 
 ### 1. Enhanced Agent Architecture
